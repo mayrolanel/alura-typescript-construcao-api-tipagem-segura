@@ -10,7 +10,13 @@ app.get("/", (_, res:Response) => {
   res.send("Bem vindo ao curso de TypeScript!");
 });
 
-function criaPet(id: number, nome:string, especie:string, idade:number, adotado:boolean) {
+function criaPet(
+  id: number, 
+  nome:string, 
+  especie:string, 
+  idade:number, 
+  adotado:boolean
+) {
   return {
     id,
     nome,
