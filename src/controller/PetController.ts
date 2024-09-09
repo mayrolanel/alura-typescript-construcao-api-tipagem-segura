@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import type TipoPet from "../tipos/TipoPet";
 import EnumEspecie from "../enum/EnumEspecie";
+import PetRepository from "../repositories/PetRepository";
+import PetEntity from "../entities/PetEntity";
 
 let listaDePets: Array<TipoPet> = [];
 
@@ -10,8 +12,11 @@ function geraId() {
   return id;
 }
 export default class PetController {
+
+    constructor(private repository: PetRepository){}
+
     criaPet(req: Request, res: Response) {
-        const { adotado, dataNascimento, especie, nome } = <TipoPet>req.body;
+        const { adotado, dataNascimento, especie, nome } = <PetEntity>req.body;
 
         if(!adotado || !dataNascimento || !nome || !especie){
             return res.status(404).json({ error: "todos os campos são obrigatórios" })
@@ -21,45 +26,44 @@ export default class PetController {
             return res.status(404).json({ error: "Especie inválida" })
         }
 
-        const novoPet: TipoPet = { id: geraId(), adotado, dataNascimento, especie, nome }
-        listaDePets.push(novoPet);
+        const novoPet: PetEntity = new PetEntity();
+        novoPet.id = geraId();
+        novoPet.adotado = adotado;
+        novoPet.especie = especie;
+        novoPet.dataNascimento = dataNascimento;
+        novoPet.nome = nome;
+        this.repository.create(novoPet);
         return res.status(201).json(novoPet)
     }
 
-    lista(req: Request, res: Response) {
-        return res.status(200).json(listaDePets)
+    async lista(req: Request, res: Response) {
+        const pets = await this.repository.list()
+        return res.status(200).json(pets)
     }
 
-    atualiza(req: Request, res: Response) {
-        console.log('atualizar: ')
+    async atualiza(req: Request, res: Response) {
         const { id } = req.params;
-        const { adotado, especie, dataNascimento, nome } = <TipoPet>req.body; 
+        const payload = <TipoPet>req.body; 
 
-        const pet = listaDePets.find((pet) => pet.id === Number(id));
+        const { success, message } = await this.repository.update(Number(id), payload);
 
-        if(!pet) {
-            return res.status(404).json({ erro: "Pet não encontrado" });
+        if(!success) {
+            return res.sendStatus(404).json({ message });
         }
 
-        pet.nome = nome;
-        pet.especie = especie;
-        pet.dataNascimento = dataNascimento;
-        pet.adotado = adotado;
-        return res.status(201).json(pet)
+        return res.sendStatus(204)
 
     }
 
-    deleta(req: Request, res: Response){
+    async deleta(req: Request, res: Response){
         const { id } = req.params;
 
-        const pet = listaDePets.find((pet) => pet.id === Number(id));
+        const { success, message } = await this.repository.delete(Number(id))
 
-        if(!pet) {
-            return res.status(404).json({ erro: "Pet não encontrado"});
+        if(!success) {
+            return res.sendStatus(404).json({ message });
         }
 
-        const index = listaDePets.indexOf(pet);
-        listaDePets.splice(index, 1)
-        return res.status(200).json({ mensagem: "Pet deletado com sucesso"});
+        return res.sendStatus(204)
     }
 }
