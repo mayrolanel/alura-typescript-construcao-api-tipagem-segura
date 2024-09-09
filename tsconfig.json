@@ -4,8 +4,15 @@
     "esModuleInterop": true,
     "noImplicitAny": true,
     "outDir": "./build",
-    "noEmitOnError": true
+    "noEmitOnError": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
   },
-  "include": ["./src/**/*", "./server.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "./src/**/*",
+    "./server.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
