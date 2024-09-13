@@ -1,17 +1,23 @@
 import { Repository } from "typeorm";
 import PetEntity from "../entities/PetEntity";
-import InterfacePetRepository from "./interface/InterfacePetRepository";
+import InterfacePetRepository from "./interface/IPetRepository";
+import AdotanteRepository from "./AdotanteRepository";
+import AdotanteEntity from "../entities/AdotanteEntity";
 
 class PetRepository implements InterfacePetRepository {
     private repository: Repository<PetEntity>;
+    private adotanteRepository: Repository<AdotanteEntity>;
 
-    constructor(repository: Repository<PetEntity>) {
+    constructor(repository: Repository<PetEntity>, adotanteRepository: Repository<AdotanteEntity>) {
         this.repository = repository;
+        this.adotanteRepository = adotanteRepository
+
     }
 
     create(pet: PetEntity): void {
         this.repository.save(pet);
     }
+
     async list(): Promise<PetEntity[]> {
         return await this.repository.find();
     }
@@ -39,6 +45,7 @@ class PetRepository implements InterfacePetRepository {
         }
 
     }
+
     async delete(id: number): Promise<{ success: boolean; message?: string }> {
         try {
             const petToRemove = await this.repository.findOne({ where: { id } })
@@ -56,6 +63,26 @@ class PetRepository implements InterfacePetRepository {
                 message: "Ocorreu um erro ao tentar excluir o pet.",
             };
         }
+    }
+
+    async adota(idPet: number, idAdotante: number): Promise<{ success: boolean; message?: string }> {
+        const pet = await this.repository.findOne({ where: { id: idPet }});
+
+        if(!pet){
+            return { success: false, message: "Pet não encontrado" };
+        }
+
+        const adotante = await this.adotanteRepository.findOne({ where: { id: idAdotante }});
+
+        if(!adotante){
+            return { success: false, message: "Adotante não encontrado" };
+        }
+
+        pet.adotante = adotante;
+        pet.adotado = true;
+
+        await this.repository.save(pet);
+        return { success: true }
     }
 
 }

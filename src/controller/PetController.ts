@@ -15,7 +15,7 @@ export default class PetController {
 
     constructor(private repository: PetRepository){}
 
-    criaPet(req: Request, res: Response) {
+    async criaPet(req: Request, res: Response) {
         const { adotado, dataNascimento, especie, nome } = <PetEntity>req.body;
 
         if(!adotado || !dataNascimento || !nome || !especie){
@@ -26,13 +26,9 @@ export default class PetController {
             return res.status(404).json({ error: "Especie inválida" })
         }
 
-        const novoPet: PetEntity = new PetEntity();
-        novoPet.id = geraId();
-        novoPet.adotado = adotado;
-        novoPet.especie = especie;
-        novoPet.dataNascimento = dataNascimento;
-        novoPet.nome = nome;
-        this.repository.create(novoPet);
+        const novoPet: PetEntity = new PetEntity(nome, especie, dataNascimento, adotado);
+        
+        await this.repository.create(novoPet);
         return res.status(201).json(novoPet)
     }
 
@@ -43,7 +39,7 @@ export default class PetController {
 
     async atualiza(req: Request, res: Response) {
         const { id } = req.params;
-        const payload = <TipoPet>req.body; 
+        const payload = <PetEntity>req.body; 
 
         const { success, message } = await this.repository.update(Number(id), payload);
 
@@ -59,6 +55,18 @@ export default class PetController {
         const { id } = req.params;
 
         const { success, message } = await this.repository.delete(Number(id))
+
+        if(!success) {
+            return res.sendStatus(404).json({ message });
+        }
+
+        return res.sendStatus(204)
+    }
+
+    async adota(req: Request, res: Response) {
+        const { pet_id, adotante_id} = req.params;
+
+        const { success, message } = await this.repository.adota(Number(pet_id), Number(adotante_id));
 
         if(!success) {
             return res.sendStatus(404).json({ message });
