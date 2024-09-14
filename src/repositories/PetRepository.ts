@@ -3,6 +3,7 @@ import PetEntity from "../entities/PetEntity";
 import InterfacePetRepository from "./interface/IPetRepository";
 import AdotanteRepository from "./AdotanteRepository";
 import AdotanteEntity from "../entities/AdotanteEntity";
+import EnumPorte from "../enum/EnumPorte";
 
 class PetRepository implements InterfacePetRepository {
     private repository: Repository<PetEntity>;
@@ -83,6 +84,18 @@ class PetRepository implements InterfacePetRepository {
 
         await this.repository.save(pet);
         return { success: true }
+    }
+
+    async searchByPorte(porte: EnumPorte): Promise<PetEntity[]> {
+        const pets = await this.repository.find({ where: { porte }})
+
+        return pets;
+    }
+
+    async searchByGenericData<Tipo extends keyof PetEntity>(campo: Tipo, valor: PetEntity[Tipo]): Promise<PetEntity[]> {
+        const pets = await this.repository.find({ where: { [campo]:valor } })
+
+        return pets;
     }
 
 }

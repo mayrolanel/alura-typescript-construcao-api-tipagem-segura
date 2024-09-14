@@ -3,6 +3,7 @@ import type TipoPet from "../tipos/TipoPet";
 import EnumEspecie from "../enum/EnumEspecie";
 import PetRepository from "../repositories/PetRepository";
 import PetEntity from "../entities/PetEntity";
+import EnumPorte from "../enum/EnumPorte";
 
 let listaDePets: Array<TipoPet> = [];
 
@@ -16,9 +17,9 @@ export default class PetController {
     constructor(private repository: PetRepository){}
 
     async criaPet(req: Request, res: Response) {
-        const { adotado, dataNascimento, especie, nome } = <PetEntity>req.body;
+        const { adotado, dataNascimento, especie, nome, porte } = <PetEntity>req.body;
 
-        if(!adotado || !dataNascimento || !nome || !especie){
+        if(!dataNascimento || !nome || !especie){
             return res.status(404).json({ error: "todos os campos são obrigatórios" })
         }
 
@@ -26,7 +27,14 @@ export default class PetController {
             return res.status(404).json({ error: "Especie inválida" })
         }
 
-        const novoPet: PetEntity = new PetEntity(nome, especie, dataNascimento, adotado);
+        console.log('Porte', (porte && (porte in EnumPorte)))
+
+        if(porte && !(porte in EnumPorte)){
+            return res.status(404).json({ error: "Porte inválido" })
+        }
+
+        const novoPet: PetEntity = new PetEntity(nome, especie, dataNascimento, adotado, porte);
+
         
         await this.repository.create(novoPet);
         return res.status(201).json(novoPet)
@@ -73,5 +81,19 @@ export default class PetController {
         }
 
         return res.sendStatus(204)
+    }
+
+    async searchByPorte(req: Request, res: Response){
+        const { porte } = req.query;
+
+        const pets = await this.repository.searchByPorte(porte as EnumPorte);
+
+        return res.status(200).json(pets);
+    }
+
+    async searchByGenericData(req: Request, res: Response){
+        const { campo, valor } = req.query;
+        const pets = await this.repository.searchByGenericData(campo as keyof PetEntity, valor as string)
+        return res.status(200).json(pets);
     }
 }
